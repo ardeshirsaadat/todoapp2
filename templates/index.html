@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    #error {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <form id='formhandler'>
+    <label for="">enter you a thing you want to do</label>
+    <input id= 'item' type="text" name="field1">
+    <input type="submit">
+  </form>
+  <div id='error' class='hidden'>something went wrong</div>
+  <ul id="ulitem">
+    {% for todo in data: %}
+    <li>{{todo.description}}</li>
+    {% endfor %}
+  </ul>
+  <script>
+    document.getElementById('formhandler').onsubmit = function(e){
+      e.preventDefault(); 
+      fetch('/todo/create',{
+        method:'POST',
+        body:JSON.stringify({
+          'todo':document.getElementById('item').value
+        }),
+        headers:{
+          'Content-Type':'application/json'
+        }
+        
+      })
+      .then(response=>response.json())
+      .then(responseJson=>{
+        const ulItem = document.getElementById('ulitem')
+        const liItem = document.createElement('LI')
+        liItem.innerHTML=responseJson['description']
+        ulItem.appendChild(liItem)
+        document.getElementById('error').classname='hidden'
+      })
+      .catch(()=>{
+        document.getElementById('error').classname=''
+      })
+    }
+
+  </script>
+</body>
+</html>
