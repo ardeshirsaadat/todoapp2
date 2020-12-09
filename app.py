@@ -1,20 +1,24 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 import sys
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://postgres:16760@localhost:5432/todoapp'
 db = SQLAlchemy(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://postgres:16760@localhost:5432/todo'
+
+migrate = Migrate(app, db)
 
 
 class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(), nullable=False)
+    completed = db.Column(db.Boolean, nullable=False, default=False)
 
     def __repr__(self):
         return f'<Todo:{self.id},Description:{self.description}'
 
 
-db.create_all()
+# db.create_all()
 
 
 @app.route('/')
@@ -42,3 +46,32 @@ def create():
         abort(400)
     else:
         return jsonify(body)
+
+
+@app.route('/todo/<todo_id>/completeTodoCheckbox', methods=['POST'])
+def completeTodoCheckbox(todo_id):
+    try:
+        completed_state = request.get_json()['completed']
+        todoObject = Todo.query.get(todo_id)
+        todoObject.completed = completed_state
+        db.session.commit()
+    except:
+        print('smth wrong')
+        db.session.rollback()
+    finally:
+        db.session.close()
+    return redirect(url_for('index'))
+
+
+@app.route('/todo/<todo_id>/delete', methods=['DELETE'])
+def delete(todo_id):
+    try:
+        objectToRemove = Todo.query.get(todo_id)
+        db.session.delete(objectToRemove)
+        db.session.commit()
+    except:
+        db.session.rollback()
+    finally:
+        db.session.close()
+    # return redirect(url_for('index'))
+    return jsonify({'success': True})

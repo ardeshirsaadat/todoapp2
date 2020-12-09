@@ -8,8 +8,28 @@
     #error {
       display: none;
     }
+    ul{
+      list-style: none;
+      width:250px
+    }
+    li{
+      width: 240px;
+      display: inline-block;
+    }
+    li button{
+      color: red;
+      border: none;
+      font-size: 20px;
+      margin: 0px;
+      padding: 0px;
+      background-color: white;
+      cursor: pointer;
+      float: right;
+    }
   </style>
 </head>
+
+<!-- body -->
 <body>
   <form id='formhandler'>
     <label for="">enter you a thing you want to do</label>
@@ -19,10 +39,44 @@
   <div id='error' class='hidden'>something went wrong</div>
   <ul id="ulitem">
     {% for todo in data: %}
-    <li>{{todo.description}}</li>
+    <li><input class="checkbox" type="checkbox" data-id="{{todo.id}}" {% if todo.completed %} checked {% endif %}>
+      {{todo.description}}
+      <button class='button' data-id="{{todo.id}}">&cross;</button>
+    </li>
     {% endfor %}
   </ul>
+
+
   <script>
+    // checkbox
+    const checkBoxArray=document.querySelectorAll('.checkbox')
+    for(i=0;i<checkBoxArray.length;i++){
+      let checkbox = checkBoxArray[i]
+      checkbox.onchange = function(e){
+        console.log(e)
+        let completedState = e.target.checked
+        let todoid = e.target.dataset.id
+        console.log(completedState)
+        fetch('todo/'+todoid+'/completeTodoCheckbox',{
+          method:'POST',
+          body:JSON.stringify({
+            'completed':completedState
+          }),
+          headers:{
+            'Content-Type': 'application/json'
+          }
+        })
+        .then(function(x) {
+            console.log('resolved',x)
+            document.getElementById('error').className = 'hidden';
+          })
+        .catch(function() {
+            console.log('went wrong')
+            document.getElementById('error').className = '';
+          })
+      }
+    }
+    // create
     document.getElementById('formhandler').onsubmit = function(e){
       e.preventDefault(); 
       fetch('/todo/create',{
@@ -47,7 +101,18 @@
         document.getElementById('error').classname=''
       })
     }
-
+  // delete
+    const buttonsArray=document.querySelectorAll('.button')
+    for (i=0;i<buttonsArray.length;i++){
+      const button=buttonsArray[i]
+      button.onclick=function(e){
+        console.log(e)
+        const toDoId = e.target.dataset.id
+        fetch('/todo/'+toDoId+'/delete',{
+          method:'DELETE'
+        })
+      }
+    }
   </script>
 </body>
 </html>
