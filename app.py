@@ -9,10 +9,19 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 
+class Todolist(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(), nullable=False)
+    todo = db.relationship('Todo', backref='list',
+                           lazy=True, cascade='all, delete-orphan')
+
+
 class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(), nullable=False)
     completed = db.Column(db.Boolean, nullable=False, default=False)
+    list_id = db.Column(db.Integer, db.ForeignKey(
+        'todolist.id'), nullable=False)
 
     def __repr__(self):
         return f'<Todo:{self.id},Description:{self.description}'
@@ -23,7 +32,7 @@ class Todo(db.Model):
 
 @app.route('/')
 def index():
-    return render_template('index.html', data=Todo.query.all())
+    return render_template('index.html', data=Todo.query.order_by('id').all())
 
 
 @app.route('/todo/create', methods=['POST'])
